@@ -1,0 +1,53 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]   # 当推送到 main 分支时触发
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}   # 自动格式化为 ghcr.io/用户名/仓库名
+
+jobs:
+  build-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # 允许推送到仓库
+      packages: write      # 允许推送到 GHCR
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}   # GitHub 自动提供的 Token
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Update Kubernetes manifest
+        run: |
+          # 获取新镜像的完整名称（带 sha 标签）
+          NEW_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo "New image: $NEW_IMAGE"
+
+          # 使用 sed 替换 deployment.yaml 中的镜像标签
+          # 假设原文件中 image 行形如：image: ghcr.io/xxx/xxx:latest
+          sed -i "s|image: .*|image: ${NEW_IMAGE}|" k8s/deployment.yaml
+
+      - name: Commit and push updated manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add k8s/deployment.yaml
+          git commit -m "Update image tag to ${{ github.sha }} [skip ci]"   # [skip ci] 防止循环触发
+          git push
