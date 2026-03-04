@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: my-app
-        image: ghcr.io/cpuhyong/my-app:latest   # 占位，稍后会被 CI 替换
+        image: ghcr.io/cpuhyong/cicdtest:a8baa3cf51e8d4e07b2b8204641be7fcfad8fd4b
         ports:
         - containerPort: 80
