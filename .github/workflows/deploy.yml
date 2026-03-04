@@ -24,6 +24,16 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}   # GitHub 自动提供的 Token
+      
+          # 新增：设置 Docker Buildx (用于多平台构建)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          # 可选：指定构建器名称，默认会自动创建一个
+          driver-opts: |
+            image=moby/buildkit:latest
+          # 重要：确保使用 'docker-container' 驱动
+          driver: docker-container
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
