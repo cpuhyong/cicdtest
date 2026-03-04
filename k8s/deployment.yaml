@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: my-app
-        image: ghcr.io/cpuhyong/cicdtest:b7416798a922fe02f8ac2e4bf7136f71f268992f
+        image: ghcr.io/cpuhyong/cicdtest:c7dcbe566294f74f5b68fc6b1a2a1f4dfa8c6a46
         ports:
         - containerPort: 80
